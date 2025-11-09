@@ -1,0 +1,6 @@
+# Create the .gitignore file and add .venv to it
+echo ".venv/" >> .gitignore
+
+# Also add other common Python files
+echo "__pycache__/" >> .gitignore
+echo "*.pyc" >> .gitignore
