@@ -22,6 +22,15 @@ import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import json
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+HAAR_CASCADE_DIR = BASE_DIR / "drowss" / "haar cascade files"
+FACERECOG_DIR = BASE_DIR / "facerecog"
+RESOURCES_DIR = BASE_DIR / "resources"
+DROWSINESS_MODEL_PATH = BASE_DIR / "drowss" / "models" / "cnncat2.h5"
+EMOTION_MODEL_PATH = BASE_DIR / "model-ep061-loss0.795-val_loss0.882.h5"
+TRAINER_DIR = BASE_DIR / "trainer"
 
 count=0
 score=0
@@ -57,8 +66,8 @@ def facetrainfun():
 
     col1, col2 = st.columns(2)
 
-    dataset_path="dataset"
-    trainer_path="trainer"
+    dataset_path = BASE_DIR / "dataset"
+    trainer_path = TRAINER_DIR
 
 
     col1.write("Original Frame")
@@ -77,19 +86,19 @@ def facetrainfun():
             # num_list = [ord(x) - 96 for x in face_id]
             # num_list=''.join(num_list)
             # face_id=int(num_list)
-            if os.path.exists(dataset_path) and os.path.isdir(dataset_path):
+            if dataset_path.exists() and dataset_path.is_dir():
                 shutil.rmtree(dataset_path)
 
-            if os.path.exists(trainer_path) and os.path.isdir(trainer_path):
+            if trainer_path.exists() and trainer_path.is_dir():
                 shutil.rmtree(trainer_path)
 
-            os.mkdir(dataset_path)
-            os.mkdir(trainer_path)
+            dataset_path.mkdir()
+            trainer_path.mkdir()
             cam = cv2.VideoCapture(0)
             cam.set(3, 640) # set video width
             cam.set(4, 480) # set video height
 
-            face_detector = cv2.CascadeClassifier('facerecog/haarcascade_frontalface_default.xml')
+            face_detector = cv2.CascadeClassifier(str(FACERECOG_DIR / 'haarcascade_frontalface_default.xml'))
 
             st.write("[INFO] Initializing face capture. Look the camera and wait ...")
             # Initialize individual sampling face count
@@ -110,7 +119,7 @@ def facetrainfun():
                     framecount.write("Number of Frames Recieved: "+str(count))
                     # Save the captured image into the datasets folder
                     captured_camera.image(gray[y:y+h,x:x+w])
-                    cv2.imwrite("dataset/User." + str(face_id) + '.' + str(count) + ".jpg", gray[y:y+h,x:x+w])
+                    cv2.imwrite(str(dataset_path / f"User.{face_id}.{count}.jpg"), gray[y:y+h,x:x+w])
                     
 
                     # cv2.imshow('image', img)
@@ -129,19 +138,19 @@ def facetrainfun():
             cv2.destroyAllWindows()
 
             recognizer = cv2.face.LBPHFaceRecognizer_create()
-            detector = cv2.CascadeClassifier("facerecog/haarcascade_frontalface_default.xml");
+            detector = cv2.CascadeClassifier(str(FACERECOG_DIR / "haarcascade_frontalface_default.xml"));
 
 
             st.write("[INFO] Training faces. It will take a few seconds. Wait ...")
-            faces,ids = getImagesAndLabels(dataset_path)
+            faces,ids = getImagesAndLabels(str(dataset_path))
             recognizer.train(faces, np.array(ids))
 
             # Save the model into trainer/trainer.yml
-            recognizer.write(trainer_path+'/trainer.yml') # recognizer.save() worked on Mac, but not on Pi
+            recognizer.write(str(trainer_path / 'trainer.yml')) # recognizer.save() worked on Mac, but not on Pi
 
             # Print the numer of faces trained and end program
             st.write("[INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids))))
-            os.rmdir("dataset")
+            shutil.rmtree(dataset_path)
         except Exception as e:
             st.error("Please Enter Valid Wellness ID "+ str(e))
 
@@ -159,26 +168,30 @@ def mainappfun():
         'neutral': (160, 160, 160)
     }
 
-    face = cv2.CascadeClassifier('drowss\haar cascade files\haarcascade_frontalface_alt.xml')
-    leye = cv2.CascadeClassifier('drowss\haar cascade files\haarcascade_lefteye_2splits.xml')
-    reye = cv2.CascadeClassifier('drowss\haar cascade files\haarcascade_righteye_2splits.xml')
+    face = cv2.CascadeClassifier(str(HAAR_CASCADE_DIR / 'haarcascade_frontalface_alt.xml'))
+    leye = cv2.CascadeClassifier(str(HAAR_CASCADE_DIR / 'haarcascade_lefteye_2splits.xml'))
+    reye = cv2.CascadeClassifier(str(HAAR_CASCADE_DIR / 'haarcascade_righteye_2splits.xml'))
 
-    trainer_path='trainer'
+    trainer_file = TRAINER_DIR / 'trainer.yml'
+
+    if not trainer_file.exists():
+        st.error("Face recognition data not found. Please register your face before starting detection.")
+        return
 
     recognizer = cv2.face.LBPHFaceRecognizer_create()
-    recognizer.read(trainer_path+'/trainer.yml')
-    cascadePath = "facerecog/haarcascade_frontalface_default.xml"
-    faceCascade = cv2.CascadeClassifier(cascadePath)
+    recognizer.read(str(trainer_file))
+    cascadePath = FACERECOG_DIR / "haarcascade_frontalface_default.xml"
+    faceCascade = cv2.CascadeClassifier(str(cascadePath))
 
 
     lbl=['Close','Open']
 
-    model = load_model('drowss/models/cnncat2.h5')
+    model = load_model(str(DROWSINESS_MODEL_PATH))
     font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 
 
-    face_classifier=cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
-    classifier = load_model('model-ep061-loss0.795-val_loss0.882.h5')
+    face_classifier=cv2.CascadeClassifier(str(RESOURCES_DIR / 'haarcascade_frontalface_default.xml'))
+    classifier = load_model(str(EMOTION_MODEL_PATH))
 
 
     mpPose = mp.solutions.pose
@@ -187,8 +200,8 @@ def mainappfun():
 
     mimetypes.init()
 
-    cascade_file = 'resources/haarcascade_frontalface_default.xml'
-    det = cv2.CascadeClassifier(cascade_file)
+    cascade_file = RESOURCES_DIR / 'haarcascade_frontalface_default.xml'
+    det = cv2.CascadeClassifier(str(cascade_file))
 
     # Colors.
     blue = (255, 127, 0)
