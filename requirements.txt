@@ -1,15 +1,18 @@
-imutils==0.5.4
-~pencv_contrib_python==4.5.5.64
-cryptography==3.4.7
-tensorflow==2.5.0
-numpy==1.19.5
-streamlit==0.86.0
-altair==4.1.0
-matplotlib==3.4.2
-pandas==1.3.1
-plotly==5.8.2
-boto3==1.24.14
-mediapipe==0.8.10
+altair==5.3.0
+boto3==1.34.86
+cryptography==42.0.8
 fpdf==1.7.2
-Pillow==9.2.0
-python-dotenv==0.20.0
+imutils==0.5.4
+matplotlib==3.8.4
+mediapipe==0.10.14
+numpy>=1.26.4,<2
+opencv-contrib-python==4.9.0.80
+pandas==2.1.4
+Pillow==10.2.0
+plotly==5.22.0
+protobuf==3.20.3
+python-dotenv==1.0.1
+streamlit==1.32.2
+tensorflow==2.13.0; platform_system != "Darwin" or platform_machine != "arm64"
+tensorflow-macos==2.13.0; platform_system == "Darwin" and platform_machine == "arm64"
+tensorflow-metal==1.1.0; platform_system == "Darwin" and platform_machine == "arm64"

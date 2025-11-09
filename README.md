@@ -40,8 +40,16 @@ Go to the project directory
 Install dependencies
 
 ```bash
+  python -m pip install --upgrade pip setuptools wheel
   pip install -r requirements.txt
 ```
+
+### Apple Silicon (M1/M2) notes
+
+- Use a Python version between 3.9 and 3.11 when creating your virtual environment.
+- The `requirements.txt` file will automatically pull in `tensorflow-macos` and the `tensorflow-metal` plugin so the drowsiness and emotion models can leverage the Apple Neural Engine.
+- If Homebrew is installed, make sure the system OpenCV dependencies are up to date: `brew install ffmpeg libomp`.
+- Grant camera access to the terminal/IDE that will run Streamlit the first time macOS prompts for permission.
 
 Start the server
 
