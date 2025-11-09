@@ -16,6 +16,15 @@ import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import json
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+HAAR_CASCADE_DIR = BASE_DIR / "drowss" / "haar cascade files"
+FACERECOG_DIR = BASE_DIR / "facerecog"
+RESOURCES_DIR = BASE_DIR / "resources"
+DROWSINESS_MODEL_PATH = BASE_DIR / "drowss" / "models" / "cnncat2.h5"
+EMOTION_MODEL_PATH = BASE_DIR / "model-ep061-loss0.795-val_loss0.882.h5"
+TRAINER_DIR = BASE_DIR / "trainer"
 
 
 class_labels = ['angry', 'scared', 'happy', 'sad', 'surprised',
@@ -30,26 +39,29 @@ COLORS = {
     'neutral': (160, 160, 160)
 }
 
-face = cv2.CascadeClassifier('drowss\haar cascade files\haarcascade_frontalface_alt.xml')
-leye = cv2.CascadeClassifier('drowss\haar cascade files\haarcascade_lefteye_2splits.xml')
-reye = cv2.CascadeClassifier('drowss\haar cascade files\haarcascade_righteye_2splits.xml')
+face = cv2.CascadeClassifier(str(HAAR_CASCADE_DIR / 'haarcascade_frontalface_alt.xml'))
+leye = cv2.CascadeClassifier(str(HAAR_CASCADE_DIR / 'haarcascade_lefteye_2splits.xml'))
+reye = cv2.CascadeClassifier(str(HAAR_CASCADE_DIR / 'haarcascade_righteye_2splits.xml'))
 
-trainer_path='trainer'
+trainer_file = TRAINER_DIR / 'trainer.yml'
+
+if not trainer_file.exists():
+    raise FileNotFoundError("trainer/trainer.yml not found. Run the face registration workflow before starting live tracking.")
 
 recognizer = cv2.face.LBPHFaceRecognizer_create()
-recognizer.read(trainer_path+'/trainer.yml')
-cascadePath = "facerecog/haarcascade_frontalface_default.xml"
-faceCascade = cv2.CascadeClassifier(cascadePath)
+recognizer.read(str(trainer_file))
+cascadePath = FACERECOG_DIR / "haarcascade_frontalface_default.xml"
+faceCascade = cv2.CascadeClassifier(str(cascadePath))
 
 
 lbl=['Close','Open']
 
-model = load_model('drowss/models/cnncat2.h5')
+model = load_model(str(DROWSINESS_MODEL_PATH))
 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 
 
-face_classifier=cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
-classifier = load_model('model-ep061-loss0.795-val_loss0.882.h5')
+face_classifier=cv2.CascadeClassifier(str(RESOURCES_DIR / 'haarcascade_frontalface_default.xml'))
+classifier = load_model(str(EMOTION_MODEL_PATH))
 
 
 mpPose = mp.solutions.pose
@@ -58,8 +70,8 @@ mpDraw = mp.solutions.drawing_utils
 
 mimetypes.init()
 
-cascade_file = 'resources/haarcascade_frontalface_default.xml'
-det = cv2.CascadeClassifier(cascade_file)
+cascade_file = RESOURCES_DIR / 'haarcascade_frontalface_default.xml'
+det = cv2.CascadeClassifier(str(cascade_file))
 
 # Colors.
 blue = (255, 127, 0)
